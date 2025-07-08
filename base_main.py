@@ -11,6 +11,7 @@ from base_bitquery_utils import (
     get_wallet_balances,
     get_top_holders,
     calculate_market_cap,
+    get_token_supply,  # Add this import
     subscribe_to_base_trades
 )
 from ai_decision import analyze_token_and_decide
@@ -83,6 +84,36 @@ def ai_trading_loop():
                     
                     print(f"  Buyers: {buyers}, Volume: {volume_str}, Trades: {trades}")
 
+                    # Get current USD price
+                    print("  Fetching current price...")
+                    current_price = "Unknown"
+                    try:
+                        price_data = get_token_price_and_marketcap(token_address)
+                        price_trades = price_data.get("data", {}).get("EVM", {}).get("DEXTradeByTokens", [])
+                        
+                        if price_trades:
+                            price_value = price_trades[0].get("Trade", {}).get("PriceInUSD")
+                            if price_value:
+                                current_price = f"${float(price_value):.8f}"
+                    except Exception as e:
+                        print(f"    Warning: Could not fetch current price - {e}")
+
+                    # Get token supply
+                    print("  Fetching token supply...")
+                    circulating_supply = "Unknown"
+                    total_supply = "Unknown"
+                    try:
+                        supply_data = get_token_supply(token_address)
+                        transfers = supply_data.get("data", {}).get("EVM", {}).get("Transfers", [])
+                        
+                        if transfers:
+                            minted = float(transfers[0].get("minted", 0))
+                            burned = float(transfers[0].get("burned", 0))
+                            circulating_supply = f"{(minted - burned):,.0f}"
+                            total_supply = f"{minted:,.0f}"
+                    except Exception as e:
+                        print(f"    Warning: Could not fetch supply data - {e}")
+
                     # Get token volatility with error handling
                     print("  Fetching volatility data...")
                     try:
@@ -152,11 +183,32 @@ def ai_trading_loop():
                     # Check if wallet holds this token
                     wallet_holds_token = token_address.lower() in owned_tokens
 
+                    # Enhanced display with price and supply
+                    try:
+                        if isinstance(market_cap, (int, float)) and market_cap != "Unknown":
+                            market_cap_str = f"${float(market_cap):,.2f}"
+                        else:
+                            market_cap_str = str(market_cap)
+                    except (ValueError, TypeError):
+                        market_cap_str = "Unknown"
+
+                    # Display enhanced information
+                    print(f"  💰 Current Price: {current_price}")
+                    print(f"  📊 Market Cap: {market_cap_str}")
+                    print(f"  🔄 Circulating Supply: {circulating_supply}")
+                    print(f"  📈 Total Supply: {total_supply}")
+                    print(f"  ⚡ Volatility: {volatility}")
+                    print(f"  🏦 Top Holder %: {holder_concentration}%")
+                    print(f"  💼 Wallet Holds: {'Yes' if wallet_holds_token else 'No'}")
+
                     # Prepare data for AI decision
                     token_analysis_data = {
                         "name": name,
                         "symbol": symbol,
+                        "current_price": current_price,
                         "market_cap": market_cap,
+                        "circulating_supply": circulating_supply,
+                        "total_supply": total_supply,
                         "liquidity_usd": liquidity_usd,
                         "volatility": volatility,
                         "holder_concentration": holder_concentration,
@@ -167,25 +219,11 @@ def ai_trading_loop():
                         "avg_price": avg_price
                     }
 
-                    # Safe formatting for market cap
-                    try:
-                        if isinstance(market_cap, (int, float)) and market_cap != "Unknown":
-                            market_cap_str = f"${float(market_cap):,.2f}"
-                        else:
-                            market_cap_str = str(market_cap)
-                    except (ValueError, TypeError):
-                        market_cap_str = "Unknown"
-
-                    print(f"  Market Cap: {market_cap_str}")
-                    print(f"  Volatility: {volatility}")
-                    print(f"  Top Holder %: {holder_concentration}%")
-                    print(f"  Wallet Holds: {'Yes' if wallet_holds_token else 'No'}")
-
                     # Get AI decision
-                    print("  Getting AI decision...")
+                    print("  🤖 Getting AI decision...")
                     decision = analyze_token_and_decide(token_analysis_data)
                     
-                    print(f"  🤖 AI Decision: {decision}")
+                    print(f"  🎯 AI Decision: {decision}")
 
                     # Execute trading logic based on decision
                     if decision == "Buy":

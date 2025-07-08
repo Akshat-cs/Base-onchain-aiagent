@@ -1,7 +1,7 @@
 import anthropic
 import os
 from dotenv import load_dotenv
-import config
+import base_config as config
 
 load_dotenv()
 
