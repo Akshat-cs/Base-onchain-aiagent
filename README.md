@@ -2,6 +2,10 @@
 
 An intelligent cryptocurrency trading bot for the Base blockchain that uses Anthropic's Claude AI to make sophisticated trading decisions based on real-time market data and comprehensive token analysis.
 
+**This is just a demo to show how you can use Bitquery APIs to get realtime data and feed it into your onchain AI agent.**
+
+**We have not implemented the actual buy and sell funxtionality, we have just implemented the ai decision making on the tokens**
+
 ## ✨ Features
 
 - **AI-Powered Decisions**: Uses Claude AI to analyze tokens and make Buy/Sell/Hold/Avoid decisions
@@ -33,8 +37,8 @@ An intelligent cryptocurrency trading bot for the Base blockchain that uses Anth
 ### 1. Clone the Repository
 
 ```bash
-git clone <your-repo-url>
-cd base-chain-ai-trading-agent
+git clone https://github.com/Akshat-cs/Base-onchain-aiagent
+cd Base-onchain-aiagent
 ```
 
 ### 2. Install Dependencies
